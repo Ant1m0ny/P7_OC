@@ -1,13 +1,21 @@
-const db = require('./../models');
-const bcrypt = require('bcrypt');
+const { User } = require('../models');
 const jwt = require('jsonwebtoken');
-const Users = db.Users;
+const bcrypt = require('bcrypt');
 
 // Create and Save a new User
 exports.signup = async (req, res) => {
+
     if (!req.body.email || !req.body.password) {
         return res.status(400).send({
             message: "Un email et un mot de passe sont requis"
+        });
+    }
+
+    // check email format
+    const emailRegex = /^[a-z0-9._-]+@[a-z0-9._-]+\.[a-z]{2,6}$/;
+    if (!emailRegex.test(req.body.email)) {
+        return res.status(400).send({
+            message: "L'email n'est pas valide"
         });
     }
 
@@ -18,44 +26,59 @@ exports.signup = async (req, res) => {
             password: hash
         }
 
-        await Users.create(user)
+        await User.create(user)
 
         return res.status(201).json({
             message: 'L\'utilisateur a bien été créé'
         })
     } catch (err) {
         return res.status(500).send({
-            message: err.message
+            message: 'Une erreur est survenue lors de la création de l\'utilisateur',
+            error: err.message
         });
     }
 }
 
 // Connect a User
 exports.login = async (req, res) => {
-    const user = await Users.findOne({
-        where: {
-            email: req.body.email
-        }
-    });
 
-    if (user === null) {
-        return res.status(404).json({
-            message: 'Utilisateur non trouvé'
+    try {
+        if (!req.body.email || !req.body.password) {
+            return res.status(400).send({
+                message: "Un email et un mot de passe sont requis"
+            });
+        }
+
+        // check email format
+        const emailRegex = /^[a-z0-9._-]+@[a-z0-9._-]+\.[a-z]{2,6}$/;
+        if (!emailRegex.test(req.body.email)) {
+            return res.status(400).send({
+                message: "L'email n'est pas valide"
+            });
+        }
+
+        const user = await User.findOne({
+            email: req.body.email
         })
-    } else {
+
+        if (!user) {
+            return res.status(404).json({
+                message: 'Utilisateur non trouvé'
+            })
+        }
+
         const valid = await bcrypt.compare(req.body.password, user.password)
 
         if (!valid) {
             return res.status(401).json({
-                error: new Error('Mot de passe incorrect')
+                message: 'Mot de passe incorrect',
             })
         }
 
         return res.status(200).json({
             userId: user.id,
             token: jwt.sign({
-                    userId: user.id,
-                    iat: Math.floor(Date.now() / 1000) - 30 // L'iat sert à bloquer le token pendant 30 secondes
+                    userId: user.id
                 },
                 process.env.TOKEN_SECRET, {
                     algorithm: 'HS256',
@@ -63,6 +86,10 @@ exports.login = async (req, res) => {
                 }
             )
         })
-
+    } catch (err) {
+        return res.status(500).send({
+            message: 'Une erreur est survenue lors de la connexion, veuillez réessayer',
+            error: err.message
+        });
     }
 }

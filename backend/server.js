@@ -1,10 +1,14 @@
 const http = require('http');
 const app = require('./app');
+const dotenv = require('dotenv');
 
-const port = 4000;
+dotenv.config();
+
+const port = process.env.PORT || '4000';
+
 const server = http.createServer(app);
 
-const errorHandler = error => {
+const errorHandler = (error) => {
 	if (error.syscall !== 'listen') {
 		throw error;
 	}
@@ -12,11 +16,11 @@ const errorHandler = error => {
 	const bind = typeof address === 'string' ? 'pipe ' + address : 'port: ' + port;
 	switch (error.code) {
 		case 'EACCES':
-			console.error(bind + ' requires elevated privileges.');
+			console.error(`${bind} requires elevated privileges.`);
 			process.exit(1);
 			break;
 		case 'EADDRINUSE':
-			console.error(bind + ' is already in use.');
+			console.error(`${bind} is already in use.`);
 			process.exit(1);
 			break;
 		default:
@@ -28,7 +32,7 @@ server.on('error', errorHandler);
 server.on('listening', () => {
 	const address = server.address();
 	const bind = typeof address === 'string' ? 'pipe ' + address : 'port ' + port;
-	console.log('Listening on ' + bind);
+	console.log(`Listening on ${bind}`);
 });
 
 server.listen(port);

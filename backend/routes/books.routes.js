@@ -2,10 +2,16 @@ const express = require('express');
 const router = express.Router();
 const controllers = require('../controllers/books.controllers');
 
+const auth = require('../middlewares/auth-middleware')
+const multer = require('../middlewares/multer-middleware');
+
 router.get('/', controllers.getBooks); // Récupérer tous les livres
 router.get('/bestratings', controllers.getBestRatings); // Récupérer les 3 livres les mieux notés
-router.post('/', controllers.addBook); // Ajouter un livre
-router.patch('/:id/rating', controllers.ratingBook); // Noter un livre
-router.delete('/:id', controllers.deleteBook); // Supprimer un livre
-router.put('/:id', controllers.updateBook); // Modifier un livre
+router.get('/:id', controllers.getBook);
 
+router.post('/', auth, multer, controllers.addBook); // Ajouter un livre
+router.patch('/:id/rating', auth, controllers.ratingBook); // Noter un livre
+router.delete('/:id', auth, controllers.deleteBook); // Supprimer un livre
+router.put('/:id', auth, multer, controllers.updateBook); // Modifier un livre
+
+module.exports = router;

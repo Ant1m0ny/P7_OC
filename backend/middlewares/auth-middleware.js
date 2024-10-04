@@ -1,27 +1,27 @@
-import {
-    JWT_SECRET
-} from '../server.js'
-import jwt from 'jsonwebtoken'
+const jwt = require('jsonwebtoken')
 
-export const authMiddleware = (req, res, next) => {
-    try {
-        // Récupération du token depuis les en-têtes
-        const token = req.headers.authorization.split(' ')[1]; // Format: "Bearer TOKEN"
+module.exports = (req, res, next) => {
+    // Vérifier si le token est présent dans le header
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1]
 
-        // Vérification du token
-        const decodedToken = jwt.verify(token, JWT_SECRET);
-
-        // Ajout des informations de l'utilisateur à l'objet request
-        req.userData = {
-            userId: decodedToken.userId,
-            email: decodedToken.email
-        };
-
-        next();
-    } catch (error) {
+    // Si le token est manquant ou invalide
+    if (!token) {
         return res.status(401).json({
-            message: 'Authentification échouée',
-            error
-        });
+            message: 'Token manquant'
+        })
     }
+
+    // Vérifier si le token est valide
+    jwt.verify(token, process.env.TOKEN_SECRET, (err, decoded) => {
+        // Si le token est invalide
+        if (err) {
+            return res.status(401).json({
+                message: 'Token invalide'
+            })
+        }
+
+        // Si le token est valide on stocke l'userId dans la requête
+        req.userId = decoded.userId
+        next() // On effectue la suite de l'action
+    })
 };
