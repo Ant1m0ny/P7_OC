@@ -1,4 +1,5 @@
 const multer = require('multer')
+const sharp = require('sharp')
 
 const MIME_TYPE = {
 	'image/jpg': 'jpg',
@@ -11,7 +12,7 @@ const storage = multer.diskStorage({
 	destination: function (req, file, callback) {
 		callback(null, './images')
 	},
-	filename:  (req, file, callback) => {
+	filename: (req, file, callback) => {
 		const filename = file.originalname.split(' ').join('_')
 		const filenameArray = filename.split('.')
 		filenameArray.pop()
@@ -23,4 +24,28 @@ const storage = multer.diskStorage({
 	}
 })
 
-module.exports = multer({storage}).single('image')
+
+const processImage = (req, res, next) => {
+	if (!req.file) {
+		return next();
+	}
+
+	const outputPath = `./images/resized_${req.file.filename}`;
+	sharp(req.file.path)
+		.resize(250, 250)
+		.toFile(outputPath, (err, info) => {
+			if (err) {
+				return next(err);
+			}
+		});
+
+	req.file.path = outputPath;
+	next();
+};
+
+module.exports = [
+	multer({
+		storage: storage
+	}).single('image'),
+	processImage
+]

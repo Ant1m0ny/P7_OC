@@ -1,7 +1,11 @@
 const mongoose = require('mongoose');
 
 const Book = mongoose.Schema({
-    image: {
+    userId: {
+        type: String,
+        required: true,
+    },
+    imageUrl: {
         type: String, // monimage.png
         required: true,
     },
@@ -21,10 +25,14 @@ const Book = mongoose.Schema({
         type: String,
         required: true,
     },
-    note: {
+    averageRating: {
         type: Number,
         required: false,
         default: 0,
+    },
+    ratings: {
+        type: Array,
+        required: false,
     },
 });
 

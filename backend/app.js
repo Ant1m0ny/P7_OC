@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 require('dotenv').config();
+const cors = require('cors');
 
 // Swagger
 const swaggerUi = require('swagger-ui-express')
@@ -16,6 +17,7 @@ const mongoose = require('mongoose');
 // Middleware
 const rateLimit = require('./middlewares/rate-limit-middleware');
 
+app.use(cors())
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
