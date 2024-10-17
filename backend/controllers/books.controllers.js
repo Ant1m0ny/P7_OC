@@ -70,7 +70,7 @@ exports.addBook = async (req, res) => {
 
         const book = {
             userId: dataBook.userId,
-            imageUrl: `${req.protocol}://${host}/images/${req.file.filename}`, // http://localhost:3000/images/imagename.jpg
+            imageUrl: `${req.protocol}://${host}/images/${req.file.filename}`,
             title: dataBook.title,
             author: dataBook.author,
             year: dataBook.year,
@@ -110,14 +110,14 @@ exports.ratingBook = async (req, res) => {
 
         const book = await Book.findById(id);
 
-        const userRating = books.rating.find(rating => rating.userId === userId);
+        const userRating = book.ratings.find(rating => rating.userId === userId);
         if (userRating) {
             return res.status(400).json({
                 message: 'Vous avez déjà noté ce livre'
             });
         }
 
-        const newRating = { 
+        const newRating = {
             userId: userId,
             grade: rating
         };
@@ -148,6 +148,7 @@ exports.ratingBook = async (req, res) => {
 exports.deleteBook = async (req, res) => {
     try {
         const book = await Book.findById(req.params.id);
+        verifyBookUser(req.userId, book.userId, res)
 
         // Supprimer l'image
         deleteImage(book.imageUrl);
@@ -172,6 +173,7 @@ exports.updateBook = async (req, res) => {
     try {
         const host = req.get('host');
         const book = await Book.findById(req.params.id);
+        verifyBookUser(req.userId, book.userId, res)
 
         if (req.file) {
             // Supprimer l'ancienne image
@@ -212,4 +214,11 @@ function deleteImage(bookImageUrl) {
             console.error(error);
         }
     });
+}
+
+function verifyBookUser(currentUser, ownerID, res) {
+    // verifier que l'utilisateur courant est le propriétaire du livre
+    if (currentUser !== ownerID) {
+        throw new Error("L'utilisateur courant n'est pas le propriétaire du livre")
+    }
 }
